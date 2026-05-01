@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="营养小助手">
+<title>妈妈的营养小助手</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --gd:#2d5a3d;--gm:#4a8c5c;--gl:#7db88a;
+    --gp:#d6ead9;--gmist:#eef5ee;--bd:#e0ebe0;
+    --am:#e8a84a;--tx:#1e2e22;--txm:#5a7060;--txl:#9ab0a0;
+  }
+  html{height:100%}
+  body{background:#f4f7f2;color:var(--tx);font-family:'Noto Sans SC',sans-serif;font-weight:300;min-height:100%;padding-bottom:80px;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 10% 0%,rgba(122,184,138,.12),transparent),radial-gradient(ellipse 50% 70% at 90% 100%,rgba(45,90,61,.08),transparent);pointer-events:none;z-index:0;}
+  .wrap{max-width:480px;margin:0 auto;position:relative;z-index:1}
+
+  /* Header */
+  .header{padding:40px 20px 16px;text-align:center}
+  .header-icon{font-size:40px;display:block;margin-bottom:10px;animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .header-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:500;color:var(--gd);display:block;margin-bottom:4px}
+  .header-sub{font-size:12px;color:var(--txl)}
+
+  /* Tabs */
+  .tabs{position:sticky;top:0;z-index:10;display:flex;margin:0 16px 16px;background:var(--gmist);border-radius:16px;padding:4px;gap:4px;box-shadow:0 2px 12px rgba(45,90,61,.08);}
+  .tab{flex:1;padding:10px 4px;border:none;background:transparent;border-radius:12px;font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--txm);cursor:pointer;transition:all .25s;}
+  .tab.active{background:#fff;color:var(--gd);font-weight:400;box-shadow:0 2px 8px rgba(45,90,61,.12)}
+
+  /* Pages */
+  .page{display:none;padding:0 16px}
+  .page.active{display:block;animation:fi .3s ease}
+  @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Card */
+  .card{background:#fff;border-radius:20px;padding:20px;margin-bottom:14px;border:1px solid var(--bd);box-shadow:0 2px 12px rgba(45,90,61,.06)}
+  .card-title{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:400;color:var(--gd);margin-bottom:14px}
+
+  /* Input row */
+  .irow{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+  .fi{flex:1;padding:12px 14px;border:1.5px solid var(--bd);border-radius:12px;font-family:'Noto Sans SC',sans-serif;font-size:14px;color:var(--tx);background:var(--gmist);outline:none;transition:border-color .2s;-webkit-appearance:none}
+  .fi:focus{border-color:var(--gl)}
+  .fi::placeholder{color:var(--txl)}
+
+  /* Mic button */
+  .mic{width:44px;height:44px;flex-shrink:0;background:var(--gmist);border:1.5px solid var(--bd);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+  .mic:active,.mic.on{background:var(--gp);border-color:var(--gl);}
+  .mic.listening{background:#fee;border-color:#e07070;animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,112,112,.35)}50%{box-shadow:0 0 0 8px rgba(224,112,112,0)}}
+
+  /* Tags */
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px;min-height:4px}
+  .tag{display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--gp);color:var(--gd);border-radius:20px;font-size:13px;animation:ti .2s ease}
+  @keyframes ti{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+  .tag button{background:none;border:none;cursor:pointer;color:var(--gm);font-size:16px;line-height:1;padding:0}
+
+  /* Chips */
+  .slabel{font-size:11px;color:var(--txl);letter-spacing:.1em;margin-bottom:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .chip{padding:5px 12px;background:#fff;border:1px solid var(--bd);border-radius:20px;font-size:12px;color:var(--txm);cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+  .chip:active,.chip.on{background:var(--gp);border-color:var(--gl);color:var(--gd)}
+
+  /* Buttons */
+  .btn{width:100%;padding:14px;background:var(--gd);color:#fff;border:none;border-radius:14px;font-family:'Noto Sans SC',sans-serif;font-size:15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent}
+  .btn:active{opacity:.85}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .btn-o{background:transparent;border:1.5px solid var(--gd);color:var(--gd);margin-top:10px}
+  .btn-o:active{background:var(--gmist)}
+
+  /* Result */
+  .rbox{margin-top:14px;padding:18px;background:var(--gmist);border-radius:14px;border:1px solid var(--gp);display:none}
+  .rbox.show{display:block;animation:fi .4s ease}
+  .rtext{font-size:14px;line-height:1.9;color:var(--tx);white-space:pre-wrap;word-break:break-word}
+
+  /* Meal rows */
+  .mrow{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+  .mlabel{background:var(--gp);color:var(--gd);border-radius:10px;padding:8px 10px;font-size:12px;min-width:46px;text-align:center;flex-shrink:0}
+  .mi{flex:1;padding:10px 13px;border:1.5px solid var(--bd);border-radius:12px;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--tx);background:var(--gmist);outline:none;transition:border-color .2s;-webkit-appearance:none}
+  .mi:focus{border-color:var(--gl)}
+
+  /* Day selector */
+  .dscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;padding-bottom:2px}
+  .drow{display:flex;gap:8px;padding:0 0 2px}
+  .dbtn{flex-shrink:0;padding:7px 16px;border:1.5px solid var(--bd);border-radius:20px;background:#fff;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--txm);cursor:pointer;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+  .dbtn.active{background:var(--gd);border-color:var(--gd);color:#fff}
+
+  /* Report */
+  .rcard{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--bd);box-shadow:0 2px 12px rgba(45,90,61,.06);margin-bottom:14px}
+  .rhead{background:var(--gd);padding:18px 22px;color:#fff}
+  .rhead-title{font-family:'Noto Serif SC',serif;font-size:17px;margin-bottom:4px}
+  .rhead-sub{font-size:12px;opacity:.7}
+  .rbody{padding:18px 22px}
+  .nrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .nname{width:48px;font-size:13px;color:var(--txm);flex-shrink:0}
+  .nbw{flex:1;height:8px;background:var(--bd);border-radius:4px;overflow:hidden}
+  .nb{height:100%;border-radius:4px;width:0%;transition:width 1s ease}
+  .nb-g{background:linear-gradient(90deg,var(--gl),var(--gm))}
+  .nb-w{background:linear-gradient(90deg,#f0c060,var(--am))}
+  .nb-l{background:linear-gradient(90deg,#e0a0a0,#e07070)}
+  .nval{font-size:12px;color:var(--txl);width:32px;text-align:right;flex-shrink:0}
+  .legend{display:flex;gap:20px;margin-top:16px}
+  .li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txl)}
+  .ld{width:12px;height:12px;border-radius:50%}
+  .ld-g{background:var(--gm)}.ld-w{background:var(--am)}.ld-l{background:#e07070}
+
+  /* Empty */
+  .empty{text-align:center;padding:24px;color:var(--txl);font-size:14px}
+  .empty .em{font-size:40px;display:block;margin-bottom:14px}
+
+  /* Loading */
+  .ld-wrap{display:flex;align-items:center;gap:8px;padding:8px 0}
+  .ld-text{font-size:13px;color:var(--txl)}
+  .dots{display:flex;gap:4px}
+  .dots span{width:6px;height:6px;border-radius:50%;background:var(--gl);animation:bounce 1.2s ease-in-out infinite}
+  .dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1);opacity:1}}
+
+  /* Voice modal */
+  .vmodal{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;}
+  .vmodal.show{opacity:1;pointer-events:all;}
+  .vsheet{width:100%;max-width:480px;background:#fff;border-radius:28px 28px 0 0;padding:36px 28px 52px;text-align:center;transform:translateY(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);}
+  .vmodal.show .vsheet{transform:translateY(0);}
+  .vwave{font-size:52px;display:block;margin-bottom:16px;}
+  .vwave.active{animation:wavebounce .6s ease-in-out infinite alternate;}
+  @keyframes wavebounce{from{transform:scale(1)}to{transform:scale(1.15)}}
+  .vstatus{font-size:16px;color:var(--gd);font-weight:400;margin-bottom:8px;}
+  .vtranscript{font-size:14px;color:var(--txm);min-height:22px;margin-bottom:28px;padding:0 20px;line-height:1.6;}
+  .vcancel{padding:12px 48px;background:var(--gmist);border:none;border-radius:14px;font-family:'Noto Sans SC',sans-serif;font-size:14px;color:var(--txm);cursor:pointer;}
+  .vcancel:active{background:var(--gp);}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--gd);color:#fff;padding:12px 24px;border-radius:20px;font-size:14px;transition:transform .3s ease;z-index:300;white-space:nowrap;box-shadow:0 4px 16px rgba(45,90,61,.3)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <span class="header-icon">🥦</span>
+    <span class="header-title">妈妈的营养小助手</span>
+    <span class="header-sub">食材搭配 · 三餐记录 · 每周营养报告</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('pair',this)">🥗 食材搭配</button>
+    <button class="tab" onclick="switchTab('log',this)">📋 三餐记录</button>
+    <button class="tab" onclick="switchTab('report',this)">📊 营养报告</button>
+  </div>
+
+  <!-- 食材搭配 -->
+  <div class="page active" id="page-pair">
+    <div class="card">
+      <div class="card-title">🛒 今天买了什么食材？</div>
+      <div class="irow">
+        <input class="fi" id="foodField" type="text" placeholder="输入食材，按回车添加" onkeydown="if(event.key==='Enter')addFood()">
+        <button class="mic" id="micPair" onclick="startVoice('pair')" title="语音输入">🎤</button>
+        <button class="btn" style="width:auto;padding:12px 16px;border-radius:12px;flex-shrink:0" onclick="addFood()">添加</button>
+      </div>
+      <div class="tags" id="foodTags"></div>
+      <div class="slabel">常用食材快速添加</div>
+      <div class="chips" id="chips"></div>
+      <button class="btn" onclick="getPairing()" id="pairBtn">✨ 获取搭配建议</button>
+    </div>
+    <div class="rbox" id="pairBox"><div class="rtext" id="pairText"></div></div>
+  </div>
+
+  <!-- 三餐记录 -->
+  <div class="page" id="page-log">
+    <div class="card">
+      <div class="card-title">📅 记录饮食</div>
+      <div class="dscroll"><div class="drow" id="daySel"></div></div>
+      <div class="mrow">
+        <div class="mlabel">早餐</div>
+        <input class="mi" id="breakfast" placeholder="如：燕麦粥、鸡蛋、牛奶">
+        <button class="mic" onclick="startVoice('breakfast')" title="语音输入">🎤</button>
+      </div>
+      <div class="mrow">
+        <div class="mlabel">午餐</div>
+        <input class="mi" id="lunch" placeholder="如：米饭、红烧鱼、炒青菜">
+        <button class="mic" onclick="startVoice('lunch')" title="语音输入">🎤</button>
+      </div>
+      <div class="mrow">
+        <div class="mlabel">晚餐</div>
+        <input class="mi" id="dinner" placeholder="如：豆腐汤、蒸鸡、馒头">
+        <button class="mic" onclick="startVoice('dinner')" title="语音输入">🎤</button>
+      </div>
+      <div class="mrow">
+        <div class="mlabel">加餐</div>
+        <input class="mi" id="snack" placeholder="如：苹果、核桃、酸奶">
+        <button class="mic" onclick="startVoice('snack')" title="语音输入">🎤</button>
+      </div>
+      <button class="btn" onclick="saveMeals()">💾 保存今天记录</button>
+      <button class="btn btn-o" onclick="getAdvice()">💬 获取今日饮食建议</button>
+    </div>
+    <div class="rbox" id="advBox"><div class="rtext" id="advText"></div></div>
+  </div>
+
+  <!-- 营养报告 -->
+  <div class="page" id="page-report">
+    <div id="repEmpty" class="card">
+      <div class="empty"><span class="em">📋</span>先在「三餐记录」里记录几天饮食<br>就能生成每周营养报告啦</div>
+      <button class="btn" onclick="useSample()">✨ 用示例数据体验一下</button>
+    </div>
+    <div id="repContent" style="display:none">
+      <div class="rcard">
+        <div class="rhead">
+          <div class="rhead-title">📊 本周营养报告</div>
+          <div class="rhead-sub">过去一周综合分析</div>
+        </div>
+        <div class="rbody" id="repBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🤖 AI 营养师建议</div>
+        <div class="rtext" id="repAdvice"></div>
+      </div>
+      <button class="btn btn-o" onclick="genReport()" style="margin-bottom:14px">🔄 重新生成</button>
+    </div>
+  </div>
+</div>
+
+<!-- Voice Modal -->
+<div class="vmodal" id="vmodal" onclick="cancelVoice()">
+  <div class="vsheet" onclick="event.stopPropagation()">
+    <span class="vwave" id="vwave">🎤</span>
+    <div class="vstatus" id="vstatus">正在听...</div>
+    <div class="vtranscript" id="vtranscript">请说出食材或饮食内容</div>
+    <button class="vcancel" onclick="cancelVoice()">取消</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS=['周一','周二','周三','周四','周五','周六','周日'];
+const SUGG=['鸡蛋','豆腐','菠菜','西红柿','胡萝卜','木耳','鲫鱼','猪肉','鸡胸肉','牛奶','燕麦','糙米','西兰花','南瓜','香菇','土豆','莲藕','山药'];
+let foods=[],curDay=0,meals={};
+let recognition=null,voiceTarget=null;
+
+try{const s=localStorage.getItem('mealData');if(s)meals=JSON.parse(s);}catch{}
+
+function init(){
+  SUGG.forEach(s=>{
+    const c=document.createElement('button');c.className='chip';c.textContent=s;
+    c.onclick=()=>{if(foods.includes(s)){foods=foods.filter(f=>f!==s);c.classList.remove('on');}else{if(foods.length<12){foods.push(s);c.classList.add('on');}}renderTags();};
+    document.getElementById('chips').appendChild(c);
+  });
+  DAYS.forEach((d,i)=>{
+    const b=document.createElement('button');b.className='dbtn'+(i===0?' active':'');
+    b.textContent=d;b.onclick=()=>selDay(i);
+    document.getElementById('daySel').appendChild(b);
+  });
+  loadDay(0);
+  initVoice();
+}
+
+// ── Voice Input ───────────────────────────────
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    // Hide all mic buttons if not supported
+    document.querySelectorAll('.mic').forEach(b=>{b.style.display='none';});
+    return;
+  }
+  recognition=new SR();
+  recognition.lang='zh-CN';
+  recognition.continuous=false;
+  recognition.interimResults=true;
+
+  recognition.onstart=()=>{
+    document.getElementById('vwave').classList.add('active');
+    document.getElementById('vstatus').textContent='正在听，请说话...';
+    document.getElementById('vtranscript').textContent='';
+  };
+
+  recognition.onresult=(e)=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    document.getElementById('vtranscript').textContent=final||interim||'...';
+    if(final)applyVoiceResult(final.trim());
+  };
+
+  recognition.onerror=(e)=>{
+    if(e.error==='no-speech'){
+      document.getElementById('vstatus').textContent='没有听到声音，请重试';
+    } else if(e.error==='not-allowed'){
+      showToast('请允许麦克风权限后重试');
+      hideModal();
+    } else {
+      document.getElementById('vstatus').textContent='识别出错，请重试';
+    }
+    document.getElementById('vwave').classList.remove('active');
+  };
+
+  recognition.onend=()=>{
+    document.getElementById('vwave').classList.remove('active');
+    document.getElementById('vstatus').textContent='识别完成';
+    setTimeout(()=>hideModal(),800);
+  };
+}
+
+function startVoice(target){
+  if(!recognition){showToast('当前浏览器不支持语音输入，请手动输入');return;}
+  voiceTarget=target;
+  document.getElementById('vstatus').textContent='正在启动...';
+  document.getElementById('vtranscript').textContent='请说出内容';
+  document.getElementById('vwave').textContent='🎤';
+  document.getElementById('vwave').classList.remove('active');
+  document.getElementById('vmodal').classList.add('show');
+  try{recognition.start();}catch(e){recognition.stop();setTimeout(()=>recognition.start(),200);}
+}
+
+function applyVoiceResult(text){
+  if(!text)return;
+  if(voiceTarget==='pair'){
+    // Split by common separators and add as foods
+    const items=text.split(/[、,，\s]+/).filter(Boolean);
+    items.forEach(item=>{if(!foods.includes(item)&&foods.length<12)foods.push(item);});
+    renderTags();
+    document.getElementById('foodField').value='';
+  } else if(['breakfast','lunch','dinner','snack'].includes(voiceTarget)){
+    const el=document.getElementById(voiceTarget);
+    el.value=el.value?(el.value+'、'+text):text;
+  }
+}
+
+function cancelVoice(){
+  try{if(recognition)recognition.stop();}catch{}
+  hideModal();
+}
+
+function hideModal(){
+  document.getElementById('vmodal').classList.remove('show');
+  voiceTarget=null;
+}
+
+// ── Tab / UI ──────────────────────────────────
+function switchTab(t,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  el.classList.add('active');
+  if(t==='report')checkRep();
+}
+
+function addFood(){
+  const v=document.getElementById('foodField').value.trim();
+  if(!v)return;
+  if(!foods.includes(v)&&foods.length<12){foods.push(v);renderTags();}
+  document.getElementById('foodField').value='';
+}
+
+function renderTags(){
+  const w=document.getElementById('foodTags');w.innerHTML='';
+  foods.forEach(f=>{
+    const t=document.createElement('div');t.className='tag';
+    t.innerHTML=`${f}<button onclick="rmFood('${f}')">×</button>`;
+    w.appendChild(t);
+  });
+  document.querySelectorAll('.chip').forEach(c=>{c.classList.toggle('on',foods.includes(c.textContent));});
+}
+
+function rmFood(n){foods=foods.filter(f=>f!==n);renderTags();}
+function loading(el){el.innerHTML='<div class="ld-wrap"><div class="dots"><span></span><span></span><span></span></div><span class="ld-text">正在分析...</span></div>';}
+
+async function callAI(prompt){
+  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+  if(!r.ok)throw new Error();
+  const d=await r.json();
+  return d.result||'暂时无法获取建议';
+}
+
+async function getPairing(){
+  if(!foods.length){showToast('请先添加食材 🥬');return;}
+  const btn=document.getElementById('pairBtn'),box=document.getElementById('pairBox'),text=document.getElementById('pairText');
+  btn.disabled=true;btn.textContent='分析中...';box.classList.add('show');loading(text);
+  try{text.textContent=await callAI(`我今天买了：${foods.join('、')}。请给出：\n1.🥗最佳搭配组合（2-3种方案+搭配理由）\n2.⚠️搭配注意（哪些不建议同食）\n3.💡营养亮点\n简洁易懂，每点2-3句。`);}
+  catch{text.textContent='获取建议失败，请检查网络后重试';}
+  btn.disabled=false;btn.innerHTML='✨ 重新分析';
+}
+
+function selDay(i){saveCur();curDay=i;document.querySelectorAll('.dbtn').forEach((b,x)=>b.classList.toggle('active',x===i));loadDay(i);}
+function saveCur(){meals[curDay]={breakfast:document.getElementById('breakfast').value,lunch:document.getElementById('lunch').value,dinner:document.getElementById('dinner').value,snack:document.getElementById('snack').value};try{localStorage.setItem('mealData',JSON.stringify(meals));}catch{}}
+function loadDay(i){const d=meals[i]||{};['breakfast','lunch','dinner','snack'].forEach(k=>document.getElementById(k).value=d[k]||'');document.getElementById('advBox').classList.remove('show');}
+function saveMeals(){saveCur();showToast('✅ 已保存'+DAYS[curDay]+'的记录');}
+
+async function getAdvice(){
+  saveCur();const d=meals[curDay]||{};
+  if(!d.breakfast&&!d.lunch&&!d.dinner){showToast('请先填写今天的饮食 🍚');return;}
+  const box=document.getElementById('advBox'),text=document.getElementById('advText');
+  box.classList.add('show');loading(text);
+  try{text.textContent=await callAI(`我${DAYS[curDay]}饮食：早餐${d.breakfast||'未记录'}，午餐${d.lunch||'未记录'}，晚餐${d.dinner||'未记录'}，加餐${d.snack||'无'}。请简短点评：1.亮点 2.改善建议 3.明天补充什么。温和亲切，150字内。`);}
+  catch{text.textContent='获取建议失败，请检查网络后重试';}
+}
+
+function checkRep(){
+  const has=Object.values(meals).some(d=>d&&(d.breakfast||d.lunch||d.dinner));
+  document.getElementById('repEmpty').style.display=has?'none':'block';
+  document.getElementById('repContent').style.display=has?'block':'none';
+  if(has)genReport();
+}
+
+function renderBars(mealObj){
+  const all=Object.values(mealObj).map(d=>[d.breakfast,d.lunch,d.dinner,d.snack].filter(Boolean).join(' ')).join(' ');
+  const sc=kws=>Math.min(Math.round(kws.filter(k=>all.includes(k)).length/kws.length*100+30),96);
+  const nuts=[
+    {n:'蛋白质',p:sc(['鸡蛋','肉','鱼','豆腐','牛奶','虾','鸡'])},
+    {n:'碳水',  p:sc(['米饭','面','粥','馒头','包子','燕麦','饺子'])},
+    {n:'蔬菜',  p:sc(['菠菜','西兰花','西红柿','青菜','胡萝卜','木耳','土豆'])},
+    {n:'钙质',  p:sc(['牛奶','豆腐','酸奶','芝麻','虾皮'])},
+    {n:'维C',   p:sc(['橙子','苹果','西红柿','猕猴桃','草莓'])},
+    {n:'水分',  p:sc(['汤','粥','牛奶','果汁','水果','豆浆'])},
+  ].map(n=>({...n,cls:n.p>=75?'g':n.p>=50?'w':'l'}));
+  const bars=document.getElementById('repBars');
+  bars.innerHTML=nuts.map(n=>`<div class="nrow"><div class="nname">${n.n}</div><div class="nbw"><div class="nb nb-${n.cls}" style="width:0%" data-p="${n.p}"></div></div><div class="nval">${n.p}%</div></div>`).join('')+
+  `<div class="legend"><div class="li"><div class="ld ld-g"></div>充足(≥75%)</div><div class="li"><div class="ld ld-w"></div>偏少(50-75%)</div><div class="li"><div class="ld ld-l"></div>不足(&lt;50%)</div></div>`;
+  setTimeout(()=>document.querySelectorAll('.nb').forEach(b=>b.style.width=b.dataset.p+'%'),100);
+}
+
+async function genReport(){
+  const adv=document.getElementById('repAdvice');loading(adv);
+  renderBars(meals);
+  const all=Object.entries(meals).map(([i,d])=>`${DAYS[i]}：早${d.breakfast||'未记录'}，午${d.lunch||'未记录'}，晚${d.dinner||'未记录'}`).join('\n');
+  try{adv.textContent=await callAI(`这周饮食：\n${all}\n\n给出每周营养分析：1.✅做得好的 2.⚠️营养缺口 3.🥗下周3条具体建议 4.💪一句鼓励。温暖语气，200字内。`);}
+  catch{adv.textContent='生成报告失败，请检查网络后重试';}
+}
+
+function useSample(){
+  meals={
+    0:{breakfast:'燕麦粥、鸡蛋、牛奶',lunch:'米饭、红烧鱼、炒菠菜',dinner:'豆腐汤、馒头',snack:'苹果'},
+    1:{breakfast:'包子、豆浆',lunch:'面条、西红柿鸡蛋',dinner:'米饭、炒土豆丝、猪肉',snack:'核桃'},
+    2:{breakfast:'鸡蛋饼、牛奶',lunch:'米饭、清蒸鸡、西兰花',dinner:'粥、小菜',snack:'橙子'},
+    3:{breakfast:'燕麦、水果',lunch:'饺子',dinner:'米饭、红烧肉、青菜',snack:''},
+    4:{breakfast:'吐司、鸡蛋',lunch:'米饭、鱼香肉丝',dinner:'汤面',snack:'香蕉'},
+  };
+  try{localStorage.setItem('mealData',JSON.stringify(meals));}catch{}
+  document.getElementById('repEmpty').style.display='none';
+  document.getElementById('repContent').style.display='block';
+  genReport();
+}
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+init();
+</script>
+</body>
+</html>
