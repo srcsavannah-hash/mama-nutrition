@@ -1,8 +1,7 @@
-// api/chat.js - Vercel Serverless Function
+// api/chat.js - Vercel Serverless Function (Google Gemini)
 const https = require('https');
 
 module.exports = async (req, res) => {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -13,24 +12,23 @@ module.exports = async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
   const body = JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1000,
-    messages: [{ role: 'user', content: prompt }]
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 1000 }
   });
+
+  const path = `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   return new Promise((resolve) => {
     const request = https.request({
-      hostname: 'api.anthropic.com',
-      path: '/v1/messages',
+      hostname: 'generativelanguage.googleapis.com',
+      path,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(body)
       }
     }, (response) => {
@@ -39,7 +37,7 @@ module.exports = async (req, res) => {
       response.on('end', () => {
         try {
           const parsed = JSON.parse(data);
-          const result = parsed.content?.[0]?.text || '暂时无法获取建议';
+          const result = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '暂时无法获取建议';
           res.status(200).json({ result });
         } catch {
           res.status(500).json({ error: '解析响应失败' });
