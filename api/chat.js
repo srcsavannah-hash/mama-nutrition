@@ -13,14 +13,14 @@ module.exports = async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+  if (!apiKey) return res.status(200).json({ result: '错误：未找到 GEMINI_API_KEY，请检查 Vercel 环境变量' });
 
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: { maxOutputTokens: 1000 }
   });
 
-  const path = `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const path = `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   return new Promise((resolve) => {
     const request = https.request({
@@ -37,17 +37,21 @@ module.exports = async (req, res) => {
       response.on('end', () => {
         try {
           const parsed = JSON.parse(data);
-          const result = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '暂时无法获取建议';
-          res.status(200).json({ result });
-        } catch {
-          res.status(500).json({ error: '解析响应失败' });
+          if (parsed.error) {
+            res.status(200).json({ result: `Gemini错误：${parsed.error.message}` });
+          } else {
+            const result = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            res.status(200).json({ result: result || `无内容：${JSON.stringify(parsed).slice(0,200)}` });
+          }
+        } catch(e) {
+          res.status(200).json({ result: `解析失败：${data.slice(0,200)}` });
         }
         resolve();
       });
     });
 
-    request.on('error', () => {
-      res.status(500).json({ error: '网络请求失败' });
+    request.on('error', (e) => {
+      res.status(200).json({ result: `请求失败：${e.message}` });
       resolve();
     });
 
