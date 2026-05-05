@@ -1,18 +1,21 @@
 const https = require('https');
 
-module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
 
-  const { prompt } = req.body;
-  if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+  const { prompt } = JSON.parse(event.body || '{}');
+  if (!prompt) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing prompt' }) };
 
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return res.status(200).json({ result: '错误：未找到 GROQ_API_KEY' });
+  if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ result: '错误：未找到 GROQ_API_KEY' }) };
 
   const body = JSON.stringify({
     model: 'llama-3.3-70b-versatile',
@@ -36,24 +39,16 @@ module.exports = async (req, res) => {
       response.on('end', () => {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.error) {
-            res.status(200).json({ result: `错误：${parsed.error.message}` });
-          } else {
-            const result = parsed.choices?.[0]?.message?.content;
-            res.status(200).json({ result: result || '暂时无法获取建议' });
-          }
-        } catch(e) {
-          res.status(200).json({ result: `解析失败：${data.slice(0,200)}` });
+          const result = parsed.choices?.[0]?.message?.content || '暂时无法获取建议';
+          resolve({ statusCode: 200, headers, body: JSON.stringify({ result }) });
+        } catch {
+          resolve({ statusCode: 200, headers, body: JSON.stringify({ result: '解析失败' }) });
         }
-        resolve();
       });
     });
-
-    request.on('error', (e) => {
-      res.status(200).json({ result: `请求失败：${e.message}` });
-      resolve();
+    request.on('error', () => {
+      resolve({ statusCode: 200, headers, body: JSON.stringify({ result: '请求失败' }) });
     });
-
     request.write(body);
     request.end();
   });
